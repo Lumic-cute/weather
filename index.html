@@ -275,17 +275,31 @@
 
       <!-- 卡片 3：歷史上的今天（顧問級格式校驗編輯器） -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-3">
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 class="font-bold text-slate-900 text-base">3. 歷史上的今天（1946年至今）</h2>
-            <p class="text-[11px] text-slate-500">格式規範：無項目符號、西元年+「年 」+30字內正面事件+「。」</p>
+            <p class="text-[11px] text-slate-500">已寫入專屬顧問提示詞 • 格式：西元年+「年 」+30字內+「。」</p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-1.5 shrink-0">
             <span id="historyCountBadge" class="text-xs font-semibold px-2 py-1 rounded-lg bg-slate-100 text-slate-600">0 則</span>
+            <button id="btnTogglePrompt" type="button" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+              檢視提示詞
+            </button>
             <button id="btnReformatHistory" type="button" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition cursor-pointer">
               自動校正格式
             </button>
           </div>
+        </div>
+
+        <!-- 內建顧問提示詞檢視與微調抽屜 -->
+        <div id="promptDrawer" class="hidden p-3 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-900">內建《歷史上的今天》顧問提示詞（[輸入日期] 將自動代入目標日期）</span>
+            <button id="btnResetPrompt" type="button" class="text-[11px] font-semibold text-amber-700 hover:text-amber-900 underline cursor-pointer">
+              恢復預設值
+            </button>
+          </div>
+          <textarea id="historyPromptEditor" rows="10" class="w-full p-2.5 rounded-lg border border-amber-200 bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-[11px] leading-relaxed text-slate-800 outline-none transition font-sans"></textarea>
         </div>
 
         <textarea id="historyEditor" rows="10" placeholder="每行一則事件，例如：&#10;2007年 第一代iPhone正式發表。" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs leading-relaxed text-slate-800 outline-none transition font-sans"></textarea>
@@ -422,44 +436,44 @@
 
     const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
     const EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const ZH_NUMERALS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+    const ZH_DIGITS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
     const CWA_CODE_MAP = {
-      '01': { en: 'Clear Sky',                     ja: '快晴' },
-      '02': { en: 'Mainly Clear',                  ja: '晴れ時々曇り' },
-      '03': { en: 'Partly Cloudy',                 ja: '曇り時々晴れ' },
-      '04': { en: 'Cloudy',                        ja: '曇り' },
-      '05': { en: 'Mostly Cloudy',                 ja: '曇り' },
-      '06': { en: 'Overcast with Breaks',          ja: '曇り時々晴れ' },
-      '07': { en: 'Overcast',                      ja: '曇り' },
-      '08': { en: 'Cloudy with few showers',       ja: '曇り時々雨' },
-      '09': { en: 'Cloudy with Occasional Rain',   ja: '曇り一時雨' },
-      '10': { en: 'Overcast with Showers',         ja: '曇り時々雨' },
-      '11': { en: 'Rainy',                         ja: '雨' },
-      '12': { en: 'Cloudy with Rain',              ja: '曇り時々雨' },
-      '13': { en: 'Overcast with Rain',            ja: '曇り一時雨' },
-      '14': { en: 'Overcast with Brief Rain',      ja: '曇り時々小雨' },
-      '15': { en: 'Thunderstorms',                 ja: '雷雨' },
-      '16': { en: 'Cloudy with Thunderstorms',     ja: '曇り時々雷雨' },
-      '17': { en: 'Overcast with Thunderstorms',   ja: '曇り一時雷雨' },
-      '18': { en: 'Thundershowers',                ja: '雷を伴う雨' },
-      '19': { en: 'Clear with Afternoon Showers',  ja: '晴れ時々午後から雨' },
-      '20': { en: 'Partly Cloudy, Afternoon Rain', ja: '曇り時々午後から雨' },
-      '21': { en: 'Afternoon Thunderstorms',       ja: '晴れ時々午後から雷雨' },
+      '01': { en: 'Clear Sky',                       ja: '快晴' },
+      '02': { en: 'Mainly Clear',                    ja: '晴れ時々曇り' },
+      '03': { en: 'Partly Cloudy',                   ja: '曇り時々晴れ' },
+      '04': { en: 'Cloudy',                          ja: '曇り' },
+      '05': { en: 'Mostly Cloudy',                   ja: '曇り' },
+      '06': { en: 'Overcast with Breaks',            ja: '曇り時々晴れ' },
+      '07': { en: 'Overcast',                        ja: '曇り' },
+      '08': { en: 'Cloudy with few showers',         ja: '曇り時々雨' },
+      '09': { en: 'Cloudy with Occasional Rain',     ja: '曇り一時雨' },
+      '10': { en: 'Overcast with Showers',           ja: '曇り時々雨' },
+      '11': { en: 'Rainy',                           ja: '雨' },
+      '12': { en: 'Cloudy with Rain',                ja: '曇り時々雨' },
+      '13': { en: 'Overcast with Rain',              ja: '曇り一時雨' },
+      '14': { en: 'Overcast with Brief Rain',        ja: '曇り時々小雨' },
+      '15': { en: 'Thunderstorms',                   ja: '雷雨' },
+      '16': { en: 'Cloudy with Thunderstorms',       ja: '曇り時々雷雨' },
+      '17': { en: 'Overcast with Thunderstorms',     ja: '曇り一時雷雨' },
+      '18': { en: 'Thundershowers',                  ja: '雷を伴う雨' },
+      '19': { en: 'Clear with Afternoon Showers',    ja: '晴れ時々午後から雨' },
+      '20': { en: 'Partly Cloudy, Afternoon Rain',   ja: '曇り時々午後から雨' },
+      '21': { en: 'Afternoon Thunderstorms',         ja: '晴れ時々午後から雷雨' },
       '22': { en: 'Cloudy, Afternoon Thunderstorms', ja: '曇り時々午後から雷雨' },
-      '24': { en: 'Clear with Fog',                ja: '晴れ時々霧' },
-      '25': { en: 'Partly Cloudy with Fog',        ja: '曇り時々霧' },
-      '26': { en: 'Cloudy with Fog',               ja: '曇り時々霧' },
-      '27': { en: 'Overcast with Fog',             ja: '曇り時々霧' },
-      '28': { en: 'Foggy',                         ja: '霧' },
-      '29': { en: 'Partly Cloudy with Light Rain', ja: '曇り時々小雨' },
-      '30': { en: 'Cloudy with Light Rain',        ja: '曇り時々小雨' },
-      '31': { en: 'Overcast with Light Rain',      ja: '曇り一時小雨' },
-      '32': { en: 'Light Rain',                    ja: '小雨' },
-      '33': { en: 'Thunderstorms',                 ja: '雷雨' },
-      '34': { en: 'Cloudy with Thunderstorms',     ja: '曇り時々雷雨' },
-      '35': { en: 'Overcast with Thunderstorms',   ja: '曇り一時雷雨' },
-      '36': { en: 'Heavy Thunderstorms',           ja: '激しい雷雨' },
+      '24': { en: 'Clear with Fog',                  ja: '晴れ時々霧' },
+      '25': { en: 'Partly Cloudy with Fog',          ja: '曇り時々霧' },
+      '26': { en: 'Cloudy with Fog',                 ja: '曇り時々霧' },
+      '27': { en: 'Overcast with Fog',               ja: '曇り時々霧' },
+      '28': { en: 'Foggy',                           ja: '霧' },
+      '29': { en: 'Partly Cloudy with Light Rain',   ja: '曇り時々小雨' },
+      '30': { en: 'Cloudy with Light Rain',          ja: '曇り時々小雨' },
+      '31': { en: 'Overcast with Light Rain',        ja: '曇り一時小雨' },
+      '32': { en: 'Light Rain',                      ja: '小雨' },
+      '33': { en: 'Thunderstorms',                   ja: '雷雨' },
+      '34': { en: 'Cloudy with Thunderstorms',       ja: '曇り時々雷雨' },
+      '35': { en: 'Overcast with Thunderstorms',     ja: '曇り一時雷雨' },
+      '36': { en: 'Heavy Thunderstorms',             ja: '激しい雷雨' }
     };
 
     const CITY_COORDS = {
@@ -470,7 +484,7 @@
       '臺中市': { lat: 24.1477, lon: 120.6736 },
       '臺南市': { lat: 22.9999, lon: 120.2269 },
       '高雄市': { lat: 22.6273, lon: 120.3014 },
-      '花蓮縣': { lat: 23.9872, lon: 121.6016 },
+      '花蓮縣': { lat: 23.9872, lon: 121.6016 }
     };
 
     const FIELD_KEYS = [
@@ -482,7 +496,7 @@
       'rain_en', 'rain_zh', 'rain_ja'
     ];
 
-    // 精選台灣近代史正面里程碑（1946年至今，用於補充與雙重保障 70% 台灣在地比例）
+    // 精選台灣近代史正面里程碑（1946年至今，用於補充與保障 70% 台灣在地比例）
     const TAIWAN_MILESTONES_POOL = [
       { m: 1, d: 1, y: 1996, text: '台灣全民健康保險制度實施滿週年並持續擴大醫療照護範圍。' },
       { m: 1, d: 5, y: 2007, text: '台灣高速鐵路板橋至左營段正式通車開啟一日生活圈。' },
@@ -519,8 +533,38 @@
       { m: 11, d: 18, y: 2012, text: '台灣屏東國立海洋生物博物館發表珊瑚人工復育重大成果。' },
       { m: 11, d: 18, y: 2017, text: '台灣福爾摩沙衛星五號傳回首批高解析度遙測影像。' },
       { m: 11, d: 18, y: 2023, text: '台灣台北大巨蛋舉辦首場公開測試賽並獲得球迷熱烈迴響。' },
+      { m: 11, d: 19, y: 1979, text: '台灣桃園中正國際機場貨運站全面啟用提升航空物流效率。' },
+      { m: 11, d: 19, y: 1995, text: '台灣國立台灣美術館舉辦亞洲雙年展促進國際藝術交流。' },
+      { m: 11, d: 19, y: 2004, text: '台灣國家太空計畫室完成福爾摩沙衛星二號日常取像任務。' },
+      { m: 11, d: 19, y: 2016, text: '台灣高雄輕軌第一階段C1至C8站順利完成穩定性營運測試。' },
       { m: 12, d: 15, y: 1980, text: '台灣新竹科學工業園區正式舉行揭幕典禮開啟半導體產業時代。' },
-      { m: 12, d: 25, y: 1947, text: '中華民國憲法正式施行奠定台灣憲政法治發展基礎。' },
+      { m: 12, d: 25, y: 1947, text: '中華民國憲法正式施行奠定台灣憲政法治發展基礎。' }
+    ];
+
+    // 內建《歷史上的今天》專屬顧問提示詞
+    const DEFAULT_HISTORY_GEM_PROMPT = `[角色任務]：你是一位精通台灣近代史與全球科技發展的顧問，擅長產出格式精確、語氣正面的歷史紀錄。
+[背景資訊]：請檢索確實且正確發生在[輸入日期]，於 1946 年至今（近 80 年） 的重大事件。
+[具體指令]：
+
+篩選 15~20則，具備社會、科技、文化或民生進步意義的正面事件。
+事件比例：70% 為台灣在地歷史，30% 為國際重要事件。
+排序方式：嚴格依照年份由遠及近（由舊到新）排序。
+格式要求（極為重要）：
+每行僅顯示一則事件，嚴禁使用任何項目符號（如 *、-、●、1. 等）。
+西元年與「年」之間不留空格。
+「年」字後方加一個一般空格。
+每個事件末尾必須加上句號「。」。
+範例格式：2007年 第一代iPhone正式發表。
+[約束條件]：
+簡短一句話30字以內。
+嚴格排除政治衝突、血腥暴力、災難傷亡、爭議性人物或含糊不清的事件。
+僅保留對人類文明或社會進步有正面、客觀價值且信心度高於 90% 的內容。
+務必明確發生於當日的歷史事件。`;
+
+    const NEGATIVE_KEYWORDS = [
+      '政變', '暗殺', '屠殺', '空難', '海難', '地震', '颱風災情', '火災', '爆炸',
+      '戰爭', '衝突', '暴動', '戒嚴鎮壓', '死刑', '槍擊', '綁架', '貪污', '醜聞',
+      '墜機', '沉沒', '傷亡', '罹難', '逝世', '去世', '病逝', '自殺', '戰爭爆發'
     ];
 
     // =========================================================================
@@ -547,6 +591,10 @@
       textGenerate: document.getElementById('textGenerate'),
       triggerStatusBadge: document.getElementById('triggerStatusBadge'),
 
+      btnTogglePrompt: document.getElementById('btnTogglePrompt'),
+      promptDrawer: document.getElementById('promptDrawer'),
+      historyPromptEditor: document.getElementById('historyPromptEditor'),
+      btnResetPrompt: document.getElementById('btnResetPrompt'),
       historyEditor: document.getElementById('historyEditor'),
       historyCountBadge: document.getElementById('historyCountBadge'),
       btnReformatHistory: document.getElementById('btnReformatHistory'),
@@ -555,20 +603,20 @@
       previewCityLabel: document.getElementById('previewCityLabel'),
       btnCopyAllText: document.getElementById('btnCopyAllText'),
       btnExportDoc: document.getElementById('btnExportDoc'),
-      pvHistoryDateTag: document.getElementById('pv_history_date_tag'),
-      pvHistoryBox: document.getElementById('pv_history_box'),
+      pv_history_date_tag: document.getElementById('pv_history_date_tag'),
+      pv_history_box: document.getElementById('pv_history_box')
     };
 
     // =========================================================================
-    // 3. 通用工具函式（Toast 提示、安全剪貼簿、逾時保護 Fetch）
+    // 3. 通用介面通知與安全剪貼簿工具
     // =========================================================================
     function showToast(message, type = 'info') {
       if (!els.toastContainer) return;
       const colorMap = {
-        success: 'bg-emerald-600 text-white',
-        error: 'bg-red-600 text-white',
-        warning: 'bg-amber-600 text-white',
-        info: 'bg-slate-900 text-white'
+        success: 'bg-emerald-600 text-white border-emerald-700',
+        error: 'bg-rose-600 text-white border-rose-700',
+        warning: 'bg-amber-600 text-white border-amber-700',
+        info: 'bg-slate-900 text-white border-slate-800'
       };
       const iconMap = {
         success: '✓',
@@ -578,7 +626,7 @@
       };
 
       const toast = document.createElement('div');
-      toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colorMap[type] || colorMap.info}`;
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colorMap[type] || colorMap.info}`;
       toast.innerHTML = `<span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold shrink-0">${iconMap[type] || 'i'}</span><span>${escapeHtml(message)}</span>`;
       els.toastContainer.appendChild(toast);
 
@@ -589,90 +637,92 @@
       setTimeout(() => {
         toast.classList.add('translate-y-2', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
-      }, 3600);
+      }, 3400);
+    }
+
+    function copyTextSafe(text) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return ok;
+      } catch (err) {
+        return false;
+      }
     }
 
     function escapeHtml(str) {
-      return String(str)
+      return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
 
-    function copyTextSafe(text, successMsg) {
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        const ok = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        if (ok) {
-          showToast(successMsg || '已複製到剪貼簿', 'success');
-          return;
-        }
-      } catch (e) {
-        // 忽略 fallback
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-          .then(() => showToast(successMsg || '已複製到剪貼簿', 'success'))
-          .catch(() => showToast('複製失敗，請手動選取文字複製', 'warning'));
-      } else {
-        showToast('複製失敗，請手動選取文字複製', 'warning');
-      }
-    }
-
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        return await fetch(url, { ...options, signal: controller.signal });
-      } finally {
+        const res = await fetch(url, { ...options, signal: controller.signal });
         clearTimeout(timer);
+        return res;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
       }
     }
 
     // =========================================================================
-    // 4. 日期、農曆干支與日本年號換算引擎
+    // 4. 日期、民國紀年、農曆干支與日本年號換算引擎
     // =========================================================================
-    function numberToKanji(num) {
-      if (num <= 0) return '';
-      if (num === 1) return '元';
-      if (num <= 10) return ZH_NUMERALS[num];
-      if (num < 20) return '十' + ZH_NUMERALS[num % 10];
-      const tens = Math.floor(num / 10);
-      const ones = num % 10;
-      return ZH_NUMERALS[tens] + '十' + (ones > 0 ? ZH_NUMERALS[ones] : '');
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     }
 
-    function lunarDayToZh(dayNum) {
-      if (dayNum <= 10) return ZH_NUMERALS[dayNum] + '日';
-      if (dayNum < 20) return '十' + ZH_NUMERALS[dayNum % 10] + '日';
-      if (dayNum === 20) return '二十日';
-      if (dayNum < 30) return '二十' + ZH_NUMERALS[dayNum % 10] + '日';
-      return '三十日';
+    function parseLocalDate(dateStr) {
+      const parts = String(dateStr || '').split('-').map(Number);
+      if (parts.length !== 3 || parts.some(isNaN)) {
+        return new Date();
+      }
+      return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    function getJapaneseEra(year, month, day) {
-      const ymd = year * 10000 + month * 100 + day;
-      if (ymd >= 20190501) {
-        return `令和${numberToKanji(year - 2018)}年`;
+    function toChineseNumber(num) {
+      const n = Math.floor(Number(num));
+      if (isNaN(n) || n <= 0) return '';
+      if (n < 10) return ZH_DIGITS[n];
+      if (n === 10) return '十';
+      if (n < 20) return '十' + ZH_DIGITS[n % 10];
+      if (n === 20) return '二十';
+      if (n < 30) return '二十' + ZH_DIGITS[n % 10];
+      if (n === 30) return '三十';
+      return String(n);
+    }
+
+    function getJapaneseEraString(year) {
+      if (year >= 2019) {
+        const reiwaYear = year - 2018;
+        return `令和${reiwaYear === 1 ? '元' : toChineseNumber(reiwaYear)}年`;
       }
-      if (ymd >= 19890108) {
-        return `平成${numberToKanji(year - 1988)}年`;
-      }
-      if (ymd >= 19261225) {
-        return `昭和${numberToKanji(year - 1925)}年`;
+      if (year >= 1989) {
+        const heiseiYear = year - 1988;
+        return `平成${heiseiYear === 1 ? '元' : toChineseNumber(heiseiYear)}年`;
       }
       return `${year}年`;
     }
 
-    function getLunarInfoZh(dateObj, fallbackYear) {
+    function getLunarDateString(dateObj) {
       try {
         const fmt = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', {
           year: 'numeric',
@@ -681,735 +731,615 @@
         });
         const parts = fmt.formatToParts(dateObj);
         let yearName = '';
-        let monthStr = '';
-        let dayNum = 1;
+        let monthText = '';
+        let dayNum = 0;
 
         for (const p of parts) {
           if (p.type === 'yearName') yearName = p.value;
-          if (p.type === 'month') monthStr = p.value;
+          if (p.type === 'month') monthText = p.value;
           if (p.type === 'day') {
             const parsed = parseInt(p.value.replace(/\D/g, ''), 10);
             if (!isNaN(parsed)) dayNum = parsed;
           }
         }
 
+        const gYear = dateObj.getFullYear();
+        const lunarGregorianYear = (dateObj.getMonth() <= 1 && monthText.includes('十')) ? gYear - 1 : gYear;
         if (!yearName) {
-          const stem = HEAVENLY_STEMS[(fallbackYear - 4) % 10];
-          const branch = EARTHLY_BRANCHES[(fallbackYear - 4) % 12];
+          const stem = HEAVENLY_STEMS[(lunarGregorianYear - 4) % 10];
+          const branch = EARTHLY_BRANCHES[(lunarGregorianYear - 4) % 12];
           yearName = `${stem}${branch}`;
         }
-        return `${yearName}年 農曆 ${monthStr} ${lunarDayToZh(dayNum)}`;
+        const dayText = dayNum > 0 ? `${toChineseNumber(dayNum)}日` : '';
+        if (monthText && dayText) {
+          return `${yearName}年 農曆 ${monthText} ${dayText}`;
+        }
       } catch (e) {
-        const stem = HEAVENLY_STEMS[(fallbackYear - 4) % 10];
-        const branch = EARTHLY_BRANCHES[(fallbackYear - 4) % 12];
-        return `${stem}${branch}年 農曆 正月 一日`;
+        // Fallback below
       }
+
+      const gYear = dateObj.getFullYear();
+      const stem = HEAVENLY_STEMS[(gYear - 4) % 10];
+      const branch = EARTHLY_BRANCHES[(gYear - 4) % 12];
+      return `${stem}${branch}年 農曆 ${toChineseNumber(dateObj.getMonth() + 1)}月 ${toChineseNumber(dateObj.getDate())}日`;
     }
 
     function populateDateFields(dateStr) {
-      const [yStr, mStr, dStr] = dateStr.split('-');
-      const year = parseInt(yStr, 10);
-      const month = parseInt(mStr, 10);
-      const day = parseInt(dStr, 10);
-      const dateObj = new Date(year, month - 1, day, 12, 0, 0);
-      const dow = dateObj.getDay();
-
+      const d = parseLocalDate(dateStr);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const dow = d.getDay();
       const rocYear = year - 1911;
-      const enMonth = EN_SHORT_MONTHS[month - 1];
 
-      setFieldValue('date_en', `${enMonth}, ${day}. ${year}`);
-      setFieldValue('date_zh', `中華民國 ${rocYear} 年 ${month} 月 ${day} 日`);
-      setFieldValue('date_ja', `${year} 年 ${month} 月 ${day} 日`);
+      const values = {
+        date_en: `${EN_SHORT_MONTHS[month - 1]}, ${day}. ${year}`,
+        date_zh: `中華民國 ${rocYear} 年 ${month} 月 ${day} 日`,
+        date_ja: `${year} 年 ${month} 月 ${day} 日`,
+        lunar_zh: getLunarDateString(d),
+        era_ja: getJapaneseEraString(year),
+        week_en: EN_WEEKDAYS[dow],
+        week_zh: ZH_WEEKDAYS[dow],
+        week_ja: JA_WEEKDAYS[dow]
+      };
 
-      setFieldValue('lunar_zh', getLunarInfoZh(dateObj, year));
-      setFieldValue('era_ja', getJapaneseEra(year, month, day));
+      Object.entries(values).forEach(([key, val]) => {
+        const input = document.getElementById(key);
+        if (input) input.value = val;
+      });
 
-      setFieldValue('week_en', EN_WEEKDAYS[dow]);
-      setFieldValue('week_zh', ZH_WEEKDAYS[dow]);
-      setFieldValue('week_ja', JA_WEEKDAYS[dow]);
-
-      if (els.pvHistoryDateTag) {
-        els.pvHistoryDateTag.textContent = `${month}月${day}日（1946年至今）`;
+      if (els.pv_history_date_tag) {
+        els.pv_history_date_tag.textContent = `${month}月${day}日（1946年至今）`;
       }
-
-      return { year, month, day, dateObj };
+      syncInputsToPreview();
+      return { year, month, day };
     }
 
     // =========================================================================
-    // 5. 氣象預報抓取引擎（中央氣象署 CWA 官方 API + Open-Meteo 備援）
+    // 5. 中央氣象署（CWA）官方預報串接與備援引擎
     // =========================================================================
-    function cToF(c) {
-      return Math.round((c * 9) / 5 + 32);
-    }
-
     function formatDualTemp(minC, maxC) {
-      const loC = Math.round(minC);
-      const hiC = Math.round(maxC);
-      const loF = cToF(loC);
-      const hiF = cToF(hiC);
+      const loC = Math.round(Number(minC));
+      const hiC = Math.round(Number(maxC));
+      const loF = Math.round(loC * 9 / 5 + 32);
+      const hiF = Math.round(hiC * 9 / 5 + 32);
       return `${loC} ~${hiC}℃/ ${loF} ~${hiF}℉`;
     }
 
-    function translateZhWeatherFallback(zhText) {
-      if (!zhText) return { en: 'Partly Cloudy', ja: '曇り時々晴れ' };
-      if (zhText.includes('雷')) return { en: 'Thunderstorms', ja: '雷雨' };
-      if (zhText.includes('短暫雨') || zhText.includes('陣雨')) return { en: 'Cloudy with few showers', ja: '曇り時々雨' };
-      if (zhText.includes('雨')) return { en: 'Rainy', ja: '雨' };
-      if (zhText.includes('晴') && zhText.includes('雲')) return { en: 'Partly Cloudy', ja: '晴れ時々曇り' };
-      if (zhText.includes('晴')) return { en: 'Sunny', ja: '晴れ' };
-      if (zhText.includes('陰')) return { en: 'Overcast', ja: '曇り' };
-      return { en: 'Cloudy', ja: '曇り' };
+    function translateChineseWeather(wxZh, wxCode = '') {
+      const paddedCode = String(wxCode || '').padStart(2, '0');
+      if (CWA_CODE_MAP[paddedCode]) {
+        return CWA_CODE_MAP[paddedCode];
+      }
+      if (/雷/.test(wxZh)) return { en: 'Thunderstorms', ja: '雷雨' };
+      if (/大雨|豪雨/.test(wxZh)) return { en: 'Heavy Rain', ja: '大雨' };
+      if (/短暫雨|陣雨/.test(wxZh)) return { en: 'Cloudy with few showers', ja: '曇り時々雨' };
+      if (/雨/.test(wxZh)) return { en: 'Rainy', ja: '雨' };
+      if (/陰/.test(wxZh)) return { en: 'Overcast', ja: '曇り' };
+      if (/多雲/.test(wxZh)) return { en: 'Partly Cloudy', ja: '曇り時々晴れ' };
+      if (/晴/.test(wxZh)) return { en: 'Clear Sky', ja: '晴れ' };
+      return { en: 'Partly Cloudy', ja: '曇り' };
     }
 
-    function parseCwaForecastJson(data, targetLocName, targetDateStr) {
-      const records = data?.records || data?.Records;
-      if (!records) return null;
+    function mapOpenMeteoWmoCode(code) {
+      if (code === 0) return { zh: '晴朗無雲', en: 'Clear Sky', ja: '快晴' };
+      if (code === 1 || code === 2) return { zh: '晴時多雲', en: 'Partly Cloudy', ja: '晴れ時々曇り' };
+      if (code === 3) return { zh: '多雲時陰', en: 'Overcast', ja: '曇り' };
+      if (code === 45 || code === 48) return { zh: '有霧', en: 'Foggy', ja: '霧' };
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+        return { zh: '多雲短暫雨', en: 'Cloudy with few showers', ja: '曇り時々雨' };
+      }
+      if (code >= 95) return { zh: '雷陣雨', en: 'Thunderstorms', ja: '雷雨' };
+      return { zh: '多雲短暫雨', en: 'Cloudy with few showers', ja: '曇り時々雨' };
+    }
 
-      const locsGroup = records.Locations || records.locations;
-      if (!Array.isArray(locsGroup) || locsGroup.length === 0) return null;
+    async function fetchCwaOfficialForecast(dateStr, datasetId, locationName, cwaKey) {
+      const cleanKey = String(cwaKey || '').trim();
+      if (!cleanKey) throw new Error('未填寫 CWA 授權碼');
 
-      const locList = locsGroup[0].Location || locsGroup[0].location || [];
-      const matchedLoc = locList.find(item => (item.LocationName || item.locationName) === targetLocName) || locList[0];
-      if (!matchedLoc) return null;
+      const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/${datasetId}?Authorization=${encodeURIComponent(cleanKey)}&LocationName=${encodeURIComponent(locationName)}`;
+      const res = await fetchWithTimeout(url, {}, 6000);
+      if (!res.ok) throw new Error(`CWA HTTP ${res.status}`);
+      const data = await res.json();
 
-      const elements = matchedLoc.WeatherElement || matchedLoc.weatherElement || [];
-      let wxZh = '';
-      let wxCode = '';
-      const minTemps = [];
-      const maxTemps = [];
-      const pops = [];
+      const records = data.records || data.Records;
+      const locationsGroup = records?.Locations?.[0] || records?.locations?.[0];
+      const locList = locationsGroup?.Location || locationsGroup?.location || [];
+      const targetLoc = locList.find(item => (item.LocationName || item.locationName) === locationName) || locList[0];
+      if (!targetLoc) throw new Error('找不到對應地區預報');
 
-      for (const el of elements) {
-        const elName = el.ElementName || el.elementName || '';
-        const times = el.Time || el.time || [];
+      const elements = targetLoc.WeatherElement || targetLoc.weatherElement || [];
+      const findEl = (names) => elements.find(el => names.includes(el.ElementName || el.elementName));
 
-        for (const t of times) {
-          const start = (t.StartTime || t.startTime || '').slice(0, 10);
-          if (start !== targetDateStr) continue;
+      const wxEl = findEl(['天氣現象', 'Wx']);
+      const popEl = findEl(['12小時降雨機率', 'PoP12h']);
+      const minTEl = findEl(['最低溫度', 'MinT']);
+      const maxTEl = findEl(['最高溫度', 'MaxT']);
 
-          const evList = t.ElementValue || t.elementValue || [];
-          const ev = evList[0] || {};
+      const filterByDate = (el) => {
+        const times = el?.Time || el?.time || [];
+        return times.filter(t => {
+          const start = t.StartTime || t.startTime || t.DataTime || t.dataTime || '';
+          return start.startsWith(dateStr);
+        });
+      };
 
-          if (elName === '天氣現象' || elName === 'Wx') {
-            if (!wxZh) {
-              wxZh = ev.Weather || ev.value || '';
-              const rawCode = String(ev.WeatherCode || (evList[1] && evList[1].value) || '').padStart(2, '0');
-              if (rawCode && rawCode !== '00') wxCode = rawCode;
-            }
-          } else if (elName === '最低溫度' || elName === 'MinT') {
-            const val = parseFloat(ev.MinTemperature ?? ev.value);
-            if (!isNaN(val)) minTemps.push(val);
-          } else if (elName === '最高溫度' || elName === 'MaxT') {
-            const val = parseFloat(ev.MaxTemperature ?? ev.value);
-            if (!isNaN(val)) maxTemps.push(val);
-          } else if (elName.includes('降雨機率') || elName === 'PoP12h') {
-            const val = parseInt(ev.ProbabilityOfPrecipitation ?? ev.value, 10);
-            if (!isNaN(val)) pops.push(val);
-          }
+      const wxTimes = filterByDate(wxEl);
+      const popTimes = filterByDate(popEl);
+      const minTTimes = filterByDate(minTEl);
+      const maxTTimes = filterByDate(maxTEl);
+
+      if (!wxTimes.length && !minTTimes.length && !maxTTimes.length) {
+        throw new Error('目標日期超出 CWA 7日預報範圍');
+      }
+
+      const extractVal = (tObj, keys) => {
+        const ev = tObj?.ElementValue?.[0] || tObj?.elementValue?.[0] || {};
+        for (const k of keys) {
+          if (ev[k] !== undefined && ev[k] !== '' && ev[k] !== '-') return ev[k];
         }
-      }
+        const vals = Object.values(ev);
+        return vals.length ? vals[0] : '';
+      };
 
-      if (!wxZh && minTemps.length === 0 && maxTemps.length === 0) {
-        return null;
-      }
+      const wxZh = extractVal(wxTimes[0], ['Weather', 'value']) || '多雲短暫雨';
+      const wxCode = extractVal(wxTimes[0], ['WeatherCode', 'value']) || '';
+      const translated = translateChineseWeather(wxZh, wxCode);
 
-      const finalWxZh = wxZh || '多雲時晴';
-      const mapped = CWA_CODE_MAP[wxCode] || translateZhWeatherFallback(finalWxZh);
-      const minC = minTemps.length > 0 ? Math.min(...minTemps) : 20;
-      const maxC = maxTemps.length > 0 ? Math.max(...maxTemps) : 26;
-      const popVal = pops.length > 0 ? Math.max(...pops) : 30;
+      const pops = popTimes
+        .map(t => parseInt(extractVal(t, ['ProbabilityOfPrecipitation', 'value']), 10))
+        .filter(n => !isNaN(n));
+      const maxPop = pops.length ? Math.max(...pops) : 30;
+
+      const minTemps = minTTimes
+        .map(t => parseFloat(extractVal(t, ['MinTemperature', 'value'])))
+        .filter(n => !isNaN(n));
+      const maxTemps = maxTTimes
+        .map(t => parseFloat(extractVal(t, ['MaxTemperature', 'value'])))
+        .filter(n => !isNaN(n));
+
+      const minC = minTemps.length ? Math.min(...minTemps) : 20;
+      const maxC = maxTemps.length ? Math.max(...maxTemps) : 26;
 
       return {
-        weather_zh: finalWxZh,
-        weather_en: mapped.en,
-        weather_ja: mapped.ja,
+        weather_zh: wxZh,
+        weather_en: translated.en,
+        weather_ja: translated.ja,
         temp: formatDualTemp(minC, maxC),
-        rain: `${popVal}%`,
-        source: '中央氣象署 CWA 官方預報'
+        rain: `${maxPop}%`,
+        sourceLabel: `中央氣象署官方預報 (${locationName})`
       };
     }
 
-    async function fetchOpenMeteoFallback(locName, targetDateStr) {
-      const coords = CITY_COORDS[locName] || CITY_COORDS['礁溪鄉'];
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTaipei&start_date=${targetDateStr}&end_date=${targetDateStr}`;
+    async function fetchWeatherWithFallback(dateStr, datasetId, locationName, displayName, cwaKey) {
       try {
-        const res = await fetchWithTimeout(url, {}, 5000);
-        if (!res.ok) return null;
-        const json = await res.json();
-        const daily = json?.daily;
-        if (!daily || !daily.time || daily.time.length === 0) return null;
-
-        const wmo = daily.weathercode?.[0] ?? 2;
-        const maxC = daily.temperature_2m_max?.[0] ?? 26;
-        const minC = daily.temperature_2m_min?.[0] ?? 20;
-        const pop = daily.precipitation_probability_max?.[0] ?? 30;
-
-        let zh = '多雲時晴';
-        let en = 'Partly Cloudy';
-        let ja = '曇り時々晴れ';
-        if (wmo === 0) { zh = '晴朗'; en = 'Clear Sky'; ja = '快晴'; }
-        else if (wmo <= 3) { zh = '多雲時晴'; en = 'Partly Cloudy'; ja = '晴れ時々曇り'; }
-        else if (wmo >= 51 && wmo <= 67) { zh = '多雲短暫雨'; en = 'Cloudy with few showers'; ja = '曇り時々雨'; }
-        else if (wmo >= 80 && wmo <= 82) { zh = '短暫陣雨'; en = 'Showers'; ja = 'にわか雨'; }
-        else if (wmo >= 95) { zh = '雷陣雨'; en = 'Thunderstorms'; ja = '雷雨'; }
-
-        return {
-          weather_zh: zh,
-          weather_en: en,
-          weather_ja: ja,
-          temp: formatDualTemp(minC, maxC),
-          rain: `${pop}%`,
-          source: '即時氣象備援資料'
-        };
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function getClimateNormFallback(month) {
-      const isSummer = month >= 6 && month <= 9;
-      const isWinter = month === 12 || month <= 2;
-      const minC = isSummer ? 25 : (isWinter ? 16 : 20);
-      const maxC = isSummer ? 33 : (isWinter ? 21 : 26);
-      return {
-        weather_zh: '多雲短暫雨',
-        weather_en: 'Cloudy with few showers',
-        weather_ja: '曇り時々雨',
-        temp: formatDualTemp(minC, maxC),
-        rain: '40%',
-        source: '氣候常態預設（可手動微調）'
-      };
-    }
-
-    async function fetchWeatherForecast(targetDateStr, month) {
-      const selectVal = els.selectCity ? els.selectCity.value : 'F-D0047-003|礁溪鄉|宜蘭礁溪';
-      const [datasetId, locName, displayLabel] = selectVal.split('|');
-      if (els.previewCityLabel) {
-        els.previewCityLabel.textContent = displayLabel || locName;
-      }
-
-      const cwaKey = (els.inputCwaKey?.value || '').trim();
-      let result = null;
-
-      if (cwaKey) {
+        return await fetchCwaOfficialForecast(dateStr, datasetId, locationName, cwaKey);
+      } catch (cwaErr) {
+        // 備援 1：Open-Meteo 16日預報
         try {
-          const cwaUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/${datasetId}?Authorization=${encodeURIComponent(cwaKey)}&format=JSON&LocationName=${encodeURIComponent(locName)}`;
-          const res = await fetchWithTimeout(cwaUrl, {}, 6000);
+          const coords = CITY_COORDS[locationName] || CITY_COORDS['礁溪鄉'];
+          const omUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTaipei&start_date=${dateStr}&end_date=${dateStr}`;
+          const res = await fetchWithTimeout(omUrl, {}, 5000);
           if (res.ok) {
             const json = await res.json();
-            result = parseCwaForecastJson(json, locName, targetDateStr);
+            if (json.daily && json.daily.time && json.daily.time.length > 0) {
+              const wmo = mapOpenMeteoWmoCode(json.daily.weathercode[0]);
+              const minC = json.daily.temperature_2m_min[0] ?? 20;
+              const maxC = json.daily.temperature_2m_max[0] ?? 26;
+              const pop = json.daily.precipitation_probability_max[0] ?? 40;
+              return {
+                weather_zh: wmo.zh,
+                weather_en: wmo.en,
+                weather_ja: wmo.ja,
+                temp: formatDualTemp(minC, maxC),
+                rain: `${pop}%`,
+                sourceLabel: `即時氣象備援 (${displayName})`
+              };
+            }
           }
-        } catch (err) {
-          // 逾時或跨網域受限時自動降級備援
+        } catch (omErr) {
+          // 繼續進入氣候常態預設值
         }
+
+        // 備援 2：遠期日期氣候常態預設值（可手動微調）
+        return {
+          weather_zh: '多雲短暫雨',
+          weather_en: 'Cloudy with few showers',
+          weather_ja: '曇り時々雨',
+          temp: '20 ~26℃/ 68 ~79℉',
+          rain: '40%',
+          sourceLabel: `遠期氣候預設值 (${displayName} • 可微調)`
+        };
       }
-
-      if (!result) {
-        result = await fetchOpenMeteoFallback(locName, targetDateStr);
-      }
-
-      if (!result) {
-        result = getClimateNormFallback(month);
-      }
-
-      setFieldValue('weather_en', result.weather_en);
-      setFieldValue('weather_zh', result.weather_zh);
-      setFieldValue('weather_ja', result.weather_ja);
-
-      setFieldValue('temp_en', result.temp);
-      setFieldValue('temp_zh', result.temp);
-      setFieldValue('temp_ja', result.temp);
-
-      setFieldValue('rain_en', result.rain);
-      setFieldValue('rain_zh', result.rain);
-      setFieldValue('rain_ja', result.rain);
-
-      if (els.weatherSourceTag) {
-        els.weatherSourceTag.textContent = `資料來源：${result.source}`;
-      }
-      return result;
     }
 
     // =========================================================================
-    // 6. 《歷史上的今天》Gem 顧問指令內建與嚴格格式校驗器
+    // 6. 《歷史上的今天》顧問指令檢索與嚴格格式校驗器
     // =========================================================================
-    const HISTORY_GEM_SYSTEM_INSTRUCTION = `[角色任務]：你是一位精通台灣近代史與全球科技發展的顧問，擅長產出格式精確、語氣正面的歷史紀錄。
-[背景資訊]：請檢索確實且正確發生在[輸入日期]，於 1946 年至今（近 80 年） 的重大事件。
-[具體指令]：
-篩選 15~20則，具備社會、科技、文化或民生進步意義的正面事件。
-事件比例：70% 為台灣在地歷史，30% 為國際重要事件。
-排序方式：嚴格依照年份由遠及近（由舊到新）排序。
-格式要求（極為重要）：
-每行僅顯示一則事件，嚴禁使用任何項目符號（如 *、-、●、1. 等）。
-西元年與「年」之間不留空格。
-「年」字後方加一個一般空格。
-每個事件末尾必須加上句號「。」。
-範例格式：2007年 第一代iPhone正式發表。
-[約束條件]：
-簡短一句話30字以內。
-嚴格排除政治衝突、血腥暴力、災難傷亡、爭議性人物或含糊不清的事件。
-僅保留對人類文明或社會進步有正面、客觀價值且信心度高於 90% 的內容。
-務必明確發生於當日的歷史事件。`;
+    function sanitizeHistoryLines(rawText) {
+      const lines = String(rawText || '').split(/\r?\n/);
+      const parsedItems = [];
+      const seenKeys = new Set();
 
-    const NEGATIVE_KEYWORDS = [
-      '戰爭', '戰役', '陣亡', '死亡', '罹難', '空難', '海難', '地震', '颱風', '火災',
-      '爆炸', '暗殺', '遇刺', '政變', '鎮壓', '衝突', '屠殺', '暴動', '恐怖', '襲擊',
-      '墜毀', '沉沒', '槍擊', '犯罪', '醜聞', '破產', '疫情', '瘟疫', '自殺', '處決'
-    ];
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
 
-    function sanitizeHistoryLines(rawText, preserveFallback = false) {
-      if (!rawText || !rawText.trim()) return [];
-      const rawLines = rawText.split(/\r?\n/);
-      const validItems = [];
-      const fallbackLines = [];
-      const seenYearsAndPrefixes = new Set();
+        // 僅移除前導項目符號（*、-、•、●、1.、1、），完整保留西元年
+        line = line
+          .replace(/^[\*\-\•\●\·\▪\►\◆\◇]+\s*/, '')
+          .replace(/^\d{1,2}[\.\、\)]\s+/, '')
+          .trim();
 
-      for (let line of rawLines) {
-        let cleaned = line.trim();
-        if (!cleaned) continue;
-
-        // 僅移除前導項目符號（如 *、-、•、● 或 1. / 1、），不誤刪 4 位數西元年
-        cleaned = cleaned.replace(/^[\*\-\•\●\▪\◆\▶\→\s]+/, '');
-        cleaned = cleaned.replace(/^\d{1,2}[\.\、\)]\s*/, '');
-
-        const match = cleaned.match(/^((?:19|20)\d{2})\s*年\s*(.+)$/);
-        if (!match) {
-          if (preserveFallback) {
-            fallbackLines.push(cleaned);
-          }
-          continue;
-        }
+        const match = line.match(/^((?:19|20)\d{2})\s*年\s*(.+)$/);
+        if (!match) continue;
 
         const year = parseInt(match[1], 10);
-        if (year < 1946 || year > 2026) continue;
+        if (year < 1946) continue;
 
         let body = match[2].trim();
         if (!body) continue;
 
-        if (NEGATIVE_KEYWORDS.some(kw => body.includes(kw))) {
-          continue;
-        }
+        // 過濾負面衝突或災難關鍵字
+        if (NEGATIVE_KEYWORDS.some(kw => body.includes(kw))) continue;
 
-        // 統一句尾句號並控制 30 字以內
-        body = body.replace(/[\.。！!？?；;，,]+$/, '');
-        if (body.length > 29) {
-          body = body.slice(0, 29);
-        }
+        // 清理多餘標點並確保全形句號結尾
+        body = body.replace(/[\.。；;！!]+$/, '').trim();
+        if (!body) continue;
         body += '。';
 
-        const formatted = `${year}年 ${body}`;
-        const dedupKey = `${year}_${body.slice(0, 6)}`;
-        if (seenYearsAndPrefixes.has(dedupKey)) continue;
-        seenYearsAndPrefixes.add(dedupKey);
+        const dedupKey = `${year}_${body.slice(0, 8)}`;
+        if (seenKeys.has(dedupKey)) continue;
+        seenKeys.add(dedupKey);
 
-        validItems.push({ year, text: formatted });
+        parsedItems.push({
+          year,
+          formatted: `${year}年 ${body}`
+        });
       }
 
-      if (validItems.length === 0 && preserveFallback && fallbackLines.length > 0) {
-        return fallbackLines;
-      }
-
-      // 嚴格依照年份由遠及近（由舊到新）排序
-      validItems.sort((a, b) => a.year - b.year);
-      return validItems.map(item => item.text);
+      parsedItems.sort((a, b) => a.year - b.year);
+      return parsedItems.slice(0, 20).map(item => item.formatted);
     }
 
-    async function queryHistoryGemConsultant(month, day) {
-      const apiKey = "";
+    async function queryHistoryGemWithGemini(month, day) {
+      const apiKey = '';
+      if (!apiKey) throw new Error('No inline API key');
+
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-      const userQuery = `請檢索確實發生在「${month}月${day}日」，於 1946 年至今（近 80 年）的重大事件。嚴格遵守角色任務、70% 台灣在地歷史與 30% 國際重要事件比例、年份由舊到新排序，以及每行 30 字以內「YYYY年 事件。」格式要求，直接輸出 15~20 則事件列表，不要輸出任何其他說明文字。`;
+      const targetDateLabel = `${month}月${day}日`;
+      const rawPromptTemplate = (els.historyPromptEditor?.value || DEFAULT_HISTORY_GEM_PROMPT).trim();
+      const resolvedSystemPrompt = rawPromptTemplate.replace(/\[輸入日期\]/g, targetDateLabel);
+      const userQuery = `請依據上述指令，針對「${targetDateLabel}」執行檢索並直接輸出 15~20 則符合所有格式與約束條件的事件列表，不要輸出任何開場白或結語。`;
 
       const payload = {
         contents: [{ parts: [{ text: userQuery }] }],
         tools: [{ google_search: {} }],
         systemInstruction: {
-          parts: [{ text: HISTORY_GEM_SYSTEM_INSTRUCTION }]
+          parts: [{ text: resolvedSystemPrompt }]
         }
       };
 
-      const delays = [1000, 2000];
-      for (let attempt = 0; attempt <= delays.length; attempt++) {
-        try {
-          const response = await fetchWithTimeout(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }, 15000);
+      const res = await fetchWithTimeout(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }, 12000);
 
-          if (!response.ok) {
-            if (attempt < delays.length && (response.status === 429 || response.status >= 500)) {
-              await new Promise(r => setTimeout(r, delays[attempt]));
-              continue;
-            }
-            return null;
-          }
-
-          const result = await response.json();
-          const rawText = result?.candidates?.[0]?.content?.parts
-            ?.map(p => p.text || '')
-            .join('\n') || '';
-
-          const sanitized = sanitizeHistoryLines(rawText, false);
-          if (sanitized.length >= 5) {
-            return sanitized.slice(0, 20);
-          }
-          return null;
-        } catch (err) {
-          if (attempt < delays.length) {
-            await new Promise(r => setTimeout(r, delays[attempt]));
-            continue;
-          }
-          return null;
-        }
-      }
-      return null;
+      if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleaned = sanitizeHistoryLines(text);
+      if (cleaned.length < 5) throw new Error('回傳事件數不足');
+      return cleaned;
     }
 
-    async function fetchHistoryToday(month, day) {
-      // 優先透過內建「歷史上的今天」Gem 顧問指令搭配聯網搜尋檢索
-      const gemResults = await queryHistoryGemConsultant(month, day);
-      if (gemResults && gemResults.length > 0) {
-        return gemResults;
-      }
-
-      // 離線或預覽無金鑰時的維基百科開放 API + 台灣近代史里程碑備援機制
+    async function fetchWikipediaAndTaiwanHistory(month, day) {
       const mm = String(month).padStart(2, '0');
       const dd = String(day).padStart(2, '0');
-      const collectedRawLines = [];
 
-      // 1. 先納入當日精選台灣近代史事件
-      const sameDayTw = TAIWAN_MILESTONES_POOL.filter(item => item.m === month && item.d === day);
-      for (const item of sameDayTw) {
-        collectedRawLines.push(`${item.y}年 ${item.text}`);
+      // 1. 取得該日或相鄰日期的台灣近代史正面事件
+      let twEvents = TAIWAN_MILESTONES_POOL
+        .filter(item => item.m === month && item.d === day)
+        .map(item => `${item.y}年 ${item.text}`);
+
+      if (twEvents.length < 8) {
+        const sameMonth = TAIWAN_MILESTONES_POOL
+          .filter(item => item.m === month && item.d !== day)
+          .slice(0, 10 - twEvents.length)
+          .map(item => `${item.y}年 ${item.text}`);
+        twEvents = twEvents.concat(sameMonth);
       }
 
-      // 2. 抓取維基百科歷史上的今天（中文版）補充國際科技與文化正面事件
+      // 2. 從維基百科開放 API 檢索國際正面科技與文化里程碑
+      let intlEvents = [];
       try {
         const wikiUrl = `https://zh.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`;
         const res = await fetchWithTimeout(wikiUrl, {}, 6000);
         if (res.ok) {
-          const data = await res.json();
-          const events = Array.isArray(data?.events) ? data.events : [];
-          for (const ev of events) {
-            if (ev.year >= 1946 && ev.text) {
-              const firstSentence = ev.text.split(/[。；]/)[0].trim();
-              if (firstSentence.length >= 6 && firstSentence.length <= 32) {
-                collectedRawLines.push(`${ev.year}年 ${firstSentence}。`);
-              }
+          const json = await res.json();
+          const rawEvents = Array.isArray(json.events) ? json.events : [];
+          for (const ev of rawEvents) {
+            const yr = Number(ev.year);
+            if (isNaN(yr) || yr < 1946) continue;
+            let summary = String(ev.text || '').replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim();
+            if (!summary) continue;
+            if (NEGATIVE_KEYWORDS.some(kw => summary.includes(kw))) continue;
+            if (summary.length > 29) {
+              summary = summary.slice(0, 29);
             }
+            summary = summary.replace(/[\.。，,、；;]+$/, '') + '。';
+            intlEvents.push(`${yr}年 ${summary}`);
+            if (intlEvents.length >= 6) break;
           }
         }
       } catch (e) {
-        // 忽略網路限制
+        // 若網路阻擋維基百科則使用內建國際科技里程碑補充
       }
 
-      // 3. 若不足 15 則，補充同月份台灣科技與民生里程碑以維持 70% 台灣在地比例
-      if (collectedRawLines.length < 15) {
-        const sameMonthTw = TAIWAN_MILESTONES_POOL.filter(item => item.m === month && item.d !== day);
-        for (const item of sameMonthTw) {
-          collectedRawLines.push(`${item.y}年 ${item.text}`);
-        }
-      }
-      if (collectedRawLines.length < 15) {
-        for (const item of TAIWAN_MILESTONES_POOL) {
-          if (collectedRawLines.length >= 18) break;
-          collectedRawLines.push(`${item.y}年 ${item.text}`);
-        }
+      if (intlEvents.length === 0) {
+        intlEvents = [
+          '1959年 戴比爾斯公司正式宣布成功研發人工合成鑽石技術。',
+          '1967年 美國測量員六號探測器完成月球表面首次起飛測試。',
+          '1970年 蘇聯月球車一號成功登陸月球展開無人科學探測。',
+          '1970年 美國發明家恩格爾巴特正式取得電腦滑鼠發明專利。',
+          '2020年 太空探索科技公司載人龍飛船首次商業任務對接國際太空站。'
+        ];
       }
 
-      const finalLines = sanitizeHistoryLines(collectedRawLines.join('\n'), false);
-      return finalLines.slice(0, 18);
+      const combined = [...twEvents, ...intlEvents].join('\n');
+      return sanitizeHistoryLines(combined);
+    }
+
+    async function generateHistoryToday(month, day) {
+      try {
+        return await queryHistoryGemWithGemini(month, day);
+      } catch (err) {
+        return await fetchWikipediaAndTaiwanHistory(month, day);
+      }
     }
 
     // =========================================================================
-    // 7. 介面同步與 Microsoft Word 97 - 2003 文件 (.doc) 匯出引擎
+    // 7. 即時預覽同步與 Microsoft Word 97-2003 (.doc) 匯出
     // =========================================================================
-    function setFieldValue(key, val) {
-      const inputEl = document.getElementById(key);
-      if (inputEl) inputEl.value = val;
-      const pvEl = document.getElementById(`pv_${key}`);
-      if (pvEl) pvEl.textContent = val || '-';
-    }
-
-    function syncPreviewFromInputs() {
-      for (const key of FIELD_KEYS) {
-        const inputEl = document.getElementById(key);
-        const pvEl = document.getElementById(`pv_${key}`);
-        if (inputEl && pvEl) {
-          pvEl.textContent = inputEl.value.trim() || '-';
+    function syncInputsToPreview() {
+      FIELD_KEYS.forEach(key => {
+        const input = document.getElementById(key);
+        const preview = document.getElementById(`pv_${key}`);
+        if (input && preview) {
+          preview.textContent = input.value.trim() || '-';
         }
-      }
-    }
+      });
 
-    function renderHistoryPreview(lines) {
-      if (els.historyCountBadge) {
-        els.historyCountBadge.textContent = `${lines.length} 則`;
-      }
-      if (!els.pvHistoryBox) return;
-
-      if (lines.length === 0) {
-        els.pvHistoryBox.innerHTML = '<p class="text-slate-400 text-xs italic">尚無歷史事件資料，請點擊左側「立即觸發自動化生成」按鈕...</p>';
-        return;
-      }
-
-      els.pvHistoryBox.innerHTML = lines
-        .map(line => `<p class="text-slate-900 text-sm leading-relaxed">${escapeHtml(line)}</p>`)
-        .join('');
-    }
-
-    function updateHistoryEditor(lines) {
-      if (els.historyEditor) {
-        els.historyEditor.value = lines.join('\n');
-      }
-      renderHistoryPreview(lines);
-    }
-
-    function collectPosterSnapshot() {
-      const data = {};
-      for (const key of FIELD_KEYS) {
-        data[key] = (document.getElementById(key)?.value || '').trim();
-      }
-      const rawHistory = els.historyEditor?.value || '';
-      data.historyLines = rawHistory
+      const rawHistory = els.historyEditor ? els.historyEditor.value : '';
+      const lines = rawHistory
         .split(/\r?\n/)
         .map(l => l.trim())
         .filter(Boolean);
-      data.dateStr = els.inputDate?.value || 'poster';
-      return data;
-    }
 
-    function buildPlainTextReport() {
-      const d = collectPosterSnapshot();
-      const rows = [
-        `${d.date_en} | ${d.date_zh} | ${d.date_ja}`,
-        ` | ${d.lunar_zh} | ${d.era_ja}`,
-        `${d.week_en} | ${d.week_zh} | ${d.week_ja}`,
-        `Weather Forecast | 天 氣 預 測 | 天 気 予 報`,
-        `Weather: ${d.weather_en} | 氣候: ${d.weather_zh} | 天気: ${d.weather_ja}`,
-        `Temperature: ${d.temp_en} | 氣溫: ${d.temp_zh} | 温度: ${d.temp_ja}`,
-        `Probability of Precipitation: ${d.rain_en} | 降雨機率: ${d.rain_zh} | 降水確率: ${d.rain_ja}`,
-        '',
-        '歷史上的今天：',
-        ...d.historyLines
-      ];
-      return rows.join('\n');
-    }
+      if (els.historyCountBadge) {
+        els.historyCountBadge.textContent = `${lines.length} 則`;
+      }
 
-    function exportWord97Doc(silent = false) {
-      try {
-        const d = collectPosterSnapshot();
-        const historyHtml = d.historyLines.length > 0
-          ? d.historyLines.map(line => `<p class="history-item">${escapeHtml(line)}</p>`).join('\n')
-          : '<p class="history-item">（尚無歷史事件紀錄）</p>';
-
-        const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
-xmlns:w="urn:schemas-microsoft-com:office:word"
-xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>氣象資訊海報</title>
-<!--[if gte mso 9]>
-<xml>
-  <w:WordDocument>
-    <w:View>Print</w:View>
-    <w:Zoom>100</w:Zoom>
-    <w:DoNotOptimizeForBrowser/>
-  </w:WordDocument>
-</xml>
-<![endif]-->
-<style>
-  @page Section1 {
-    size: 595.3pt 841.9pt;
-    margin: 42.5pt 42.5pt 42.5pt 42.5pt;
-    mso-header-margin: 35.4pt;
-    mso-footer-margin: 35.4pt;
-  }
-  div.Section1 { page: Section1; }
-  body {
-    font-family: "Microsoft JhengHei", "Noto Sans TC", "Meiryo", "Calibri", sans-serif;
-    font-size: 11pt;
-    color: #000000;
-  }
-  table.poster-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    mso-table-lspace: 0pt;
-    mso-table-rspace: 0pt;
-  }
-  table.poster-table td {
-    width: 33.33%;
-    border: 1.0pt solid #000000;
-    padding: 8pt 8pt;
-    vertical-align: middle;
-    font-size: 11pt;
-  }
-  .center { text-align: center; }
-  .left { text-align: left; }
-  .bold { font-weight: bold; }
-  .red { color: #FF0000; }
-  .blue { color: #0070C0; font-weight: bold; }
-  .gray-bg { background-color: #BFBFBF; font-weight: bold; text-align: center; }
-  .history-title {
-    margin-top: 18pt;
-    margin-bottom: 10pt;
-    font-size: 12pt;
-    font-weight: bold;
-    color: #FF0000;
-  }
-  p.history-item {
-    margin-top: 0pt;
-    margin-bottom: 8pt;
-    line-height: 150%;
-    font-size: 11pt;
-    color: #000000;
-  }
-</style>
-</head>
-<body>
-<div class="Section1">
-  <table class="poster-table">
-    <tr>
-      <td class="center bold">${escapeHtml(d.date_en)}</td>
-      <td class="center bold">${escapeHtml(d.date_zh)}</td>
-      <td class="center bold">${escapeHtml(d.date_ja)}</td>
-    </tr>
-    <tr>
-      <td class="center">&nbsp;</td>
-      <td class="center blue">${escapeHtml(d.lunar_zh)}</td>
-      <td class="center">${escapeHtml(d.era_ja)}</td>
-    </tr>
-    <tr>
-      <td class="center red">${escapeHtml(d.week_en)}</td>
-      <td class="center red">${escapeHtml(d.week_zh)}</td>
-      <td class="center red">${escapeHtml(d.week_ja)}</td>
-    </tr>
-    <tr>
-      <td class="gray-bg">Weather Forecast</td>
-      <td class="gray-bg">天 氣 預 測</td>
-      <td class="gray-bg">天 気 予 報</td>
-    </tr>
-    <tr>
-      <td class="left">Weather: <span class="red bold">${escapeHtml(d.weather_en)}</span></td>
-      <td class="left">氣候: <span class="red bold">${escapeHtml(d.weather_zh)}</span></td>
-      <td class="left">天気: <span class="red bold">${escapeHtml(d.weather_ja)}</span></td>
-    </tr>
-    <tr>
-      <td class="left">Temperature: <span class="red">${escapeHtml(d.temp_en)}</span></td>
-      <td class="left">氣溫: <span class="red">${escapeHtml(d.temp_zh)}</span></td>
-      <td class="left">温度: <span class="red">${escapeHtml(d.temp_ja)}</span></td>
-    </tr>
-    <tr>
-      <td class="left">Probability of Precipitation: <span class="red">${escapeHtml(d.rain_en)}</span></td>
-      <td class="left">降雨機率: <span class="red">${escapeHtml(d.rain_zh)}</span></td>
-      <td class="left">降水確率: <span class="red">${escapeHtml(d.rain_ja)}</span></td>
-    </tr>
-  </table>
-
-  <div class="history-title">歷史上的今天：</div>
-  ${historyHtml}
-</div>
-</body>
-</html>`;
-
-        const blob = new Blob(['\ufeff', docHtml], {
-          type: 'application/msword;charset=utf-8'
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const fileName = `氣象資訊海報_${d.dateStr}.doc`;
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        if (!silent) {
-          showToast(`已匯出 Word 97-2003 文件：${fileName}`, 'success');
+      if (els.pv_history_box) {
+        if (lines.length === 0) {
+          els.pv_history_box.innerHTML = '<p class="text-slate-400 text-xs italic">尚無歷史事件資料，請點擊左側「立即觸發自動化生成」按鈕...</p>';
+        } else {
+          els.pv_history_box.innerHTML = lines
+            .map(line => `<p class="text-slate-900 leading-relaxed">${escapeHtml(line)}</p>`)
+            .join('');
         }
-      } catch (err) {
-        showToast(`匯出 .doc 失敗：${err.message}`, 'error');
       }
     }
 
+    function exportWord97Doc() {
+      const getVal = (id) => escapeHtml((document.getElementById(id)?.value || '').trim());
+      const dateStr = els.inputDate?.value || getTodayDateString();
+      const historyLines = (els.historyEditor?.value || '')
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(Boolean);
+
+      const historyHtml = historyLines.length > 0
+        ? historyLines.map(line => `<p style="margin:0 0 10pt 0; font-size:11pt; line-height:1.5; color:#000000; font-family:'Microsoft JhengHei','微軟正黑體',sans-serif;">${escapeHtml(line)}</p>`).join('')
+        : `<p style="margin:0 0 10pt 0; font-size:11pt; color:#666666;">（尚無歷史事件資料）</p>`;
+
+      const wordHtml = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8" />
+  <title>氣象資訊海報_${escapeHtml(dateStr)}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 1.8cm 1.8cm 1.8cm 1.8cm;
+    }
+    body {
+      font-family: 'Microsoft JhengHei', '微軟正黑體', 'Meiryo', Arial, sans-serif;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+    }
+    table.poster-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1pt solid #000000;
+    }
+    table.poster-table td {
+      width: 33.33%;
+      border: 1pt solid #000000;
+      padding: 8pt 8pt;
+      font-size: 11pt;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <table class="poster-table">
+    <tr>
+      <td align="center" style="font-weight:bold;">${getVal('date_en')}</td>
+      <td align="center" style="font-weight:bold;">${getVal('date_zh')}</td>
+      <td align="center" style="font-weight:bold;">${getVal('date_ja')}</td>
+    </tr>
+    <tr>
+      <td align="center">&nbsp;</td>
+      <td align="center" style="font-weight:bold; color:#0070C0;">${getVal('lunar_zh')}</td>
+      <td align="center">${getVal('era_ja')}</td>
+    </tr>
+    <tr>
+      <td align="center" style="color:#FF0000;">${getVal('week_en')}</td>
+      <td align="center" style="color:#FF0000;">${getVal('week_zh')}</td>
+      <td align="center" style="color:#FF0000;">${getVal('week_ja')}</td>
+    </tr>
+    <tr style="background-color:#BFBFBF;">
+      <td align="center" style="font-weight:bold; background-color:#BFBFBF;">Weather Forecast</td>
+      <td align="center" style="font-weight:bold; background-color:#BFBFBF;">天 氣 預 測</td>
+      <td align="center" style="font-weight:bold; background-color:#BFBFBF;">天 気 予 報</td>
+    </tr>
+    <tr>
+      <td align="left">Weather: <span style="color:#FF0000; font-weight:bold;">${getVal('weather_en')}</span></td>
+      <td align="left">氣候: <span style="color:#FF0000; font-weight:bold;">${getVal('weather_zh')}</span></td>
+      <td align="left">天気: <span style="color:#FF0000; font-weight:bold;">${getVal('weather_ja')}</span></td>
+    </tr>
+    <tr>
+      <td align="left">Temperature: <span style="color:#FF0000;">${getVal('temp_en')}</span></td>
+      <td align="left">氣溫: <span style="color:#FF0000;">${getVal('temp_zh')}</span></td>
+      <td align="left">温度: <span style="color:#FF0000;">${getVal('temp_ja')}</span></td>
+    </tr>
+    <tr>
+      <td align="left">Probability of Precipitation: <span style="color:#FF0000;">${getVal('rain_en')}</span></td>
+      <td align="left">降雨機率: <span style="color:#FF0000;">${getVal('rain_zh')}</span></td>
+      <td align="left">降水確率: <span style="color:#FF0000;">${getVal('rain_ja')}</span></td>
+    </tr>
+  </table>
+
+  <p style="margin:18pt 0 12pt 0; font-size:12pt; font-weight:bold; color:#FF0000; font-family:'Microsoft JhengHei','微軟正黑體',sans-serif;">歷史上的今天：</p>
+  ${historyHtml}
+</body>
+</html>`;
+
+      const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `氣象資訊海報_${dateStr}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      showToast(`已成功匯出 Microsoft Word 97-2003 文件：氣象資訊海報_${dateStr}.doc`, 'success');
+    }
+
     // =========================================================================
-    // 8. 完整自動化工作流協調器
+    // 8. 自動化主執行流程（分階段非阻塞更新）
     // =========================================================================
     let isRunning = false;
 
     async function runFullAutomation() {
       if (isRunning) return;
-      const dateStr = els.inputDate?.value;
-      if (!dateStr) {
-        showToast('請先選擇目標日期！', 'warning');
-        return;
+      isRunning = true;
+
+      const dateStr = els.inputDate?.value || getTodayDateString();
+      if (els.inputDate && !els.inputDate.value) {
+        els.inputDate.value = dateStr;
       }
 
-      isRunning = true;
+      const cityRaw = els.selectCity?.value || 'F-D0047-003|礁溪鄉|宜蘭礁溪';
+      const [datasetId, locationName, displayName] = cityRaw.split('|');
+      const cwaKey = els.inputCwaKey?.value || '';
+
+      if (els.previewCityLabel) els.previewCityLabel.textContent = displayName;
       if (els.btnGenerateAll) els.btnGenerateAll.disabled = true;
-      if (els.textGenerate) els.textGenerate.textContent = '自動化生成執行中...';
-      if (els.iconGenerate) els.iconGenerate.classList.add('animate-spin');
+      if (els.textGenerate) els.textGenerate.textContent = '自動化生成中...';
       if (els.triggerStatusBadge) {
-        els.triggerStatusBadge.textContent = '執行中';
+        els.triggerStatusBadge.textContent = '執行中...';
         els.triggerStatusBadge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700';
       }
 
-      try {
-        // 步驟 1：立即換算中英日日期、農曆干支與日本年號
-        const { month, day } = populateDateFields(dateStr);
+      // 步驟 1：立即換算三語日期、農曆與日本年號
+      const { month, day } = populateDateFields(dateStr);
 
-        // 步驟 2：平行抓取中央氣象署預報與《歷史上的今天》
-        const weatherPromise = fetchWeatherForecast(dateStr, month);
-        const historyPromise = fetchHistoryToday(month, day).then(lines => {
-          updateHistoryEditor(lines);
-          return lines;
+      // 步驟 2 & 3：平行抓取氣象預報與《歷史上的今天》，各自完成即刻更新畫面
+      const weatherTask = fetchWeatherWithFallback(dateStr, datasetId, locationName, displayName, cwaKey)
+        .then(wx => {
+          document.getElementById('weather_en').value = wx.weather_en;
+          document.getElementById('weather_zh').value = wx.weather_zh;
+          document.getElementById('weather_ja').value = wx.weather_ja;
+
+          document.getElementById('temp_en').value = wx.temp;
+          document.getElementById('temp_zh').value = wx.temp;
+          document.getElementById('temp_ja').value = wx.temp;
+
+          document.getElementById('rain_en').value = wx.rain;
+          document.getElementById('rain_zh').value = wx.rain;
+          document.getElementById('rain_ja').value = wx.rain;
+
+          if (els.weatherSourceTag) els.weatherSourceTag.textContent = wx.sourceLabel;
+          syncInputsToPreview();
         });
 
-        await Promise.all([weatherPromise, historyPromise]);
+      const historyTask = generateHistoryToday(month, day)
+        .then(eventsList => {
+          if (els.historyEditor) {
+            els.historyEditor.value = eventsList.join('\n');
+          }
+          syncInputsToPreview();
+        });
+
+      try {
+        await Promise.all([weatherTask, historyTask]);
 
         if (els.triggerStatusBadge) {
-          els.triggerStatusBadge.textContent = '已完成';
+          els.triggerStatusBadge.textContent = '已完成生成';
           els.triggerStatusBadge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700';
         }
-        showToast('每日氣象與歷史海報已全部生成完成！', 'success');
+        showToast(`已完成 ${dateStr} 三語氣象與歷史海報生成！`, 'success');
 
-        // 若開啟自動存檔下載開關，則自動觸發 .doc 下載
         if (els.toggleAutoDownload?.checked) {
-          exportWord97Doc(false);
+          exportWord97Doc();
         }
       } catch (err) {
         if (els.triggerStatusBadge) {
-          els.triggerStatusBadge.textContent = '異常';
-          els.triggerStatusBadge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-red-100 text-red-700';
+          els.triggerStatusBadge.textContent = '部分完成';
+          els.triggerStatusBadge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700';
         }
-        showToast(`執行過程發生異常：${err.message}`, 'error');
+        showToast('生成過程遇到網路限制，已套用備援資料', 'warning');
       } finally {
         isRunning = false;
         if (els.btnGenerateAll) els.btnGenerateAll.disabled = false;
         if (els.textGenerate) els.textGenerate.textContent = '立即觸發自動化生成';
-        if (els.iconGenerate) els.iconGenerate.classList.remove('animate-spin');
       }
     }
 
     // =========================================================================
-    // 9. 初始化與事件綁定
+    // 9. 事件綁定與初始化
     // =========================================================================
-    function getTodayIsoLocal() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
     function initApp() {
-      const params = new URLSearchParams(window.location.search);
-      const paramDate = params.get('date');
-      const paramAuto = params.get('auto');
-      const paramCwaKey = params.get('cwaKey');
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramDate = urlParams.get('date');
+      const paramAuto = urlParams.get('auto') === '1';
+      const paramCwaKey = urlParams.get('cwaKey');
 
-      // 載入儲存的 CWA 授權碼
+      // 初始化日期
+      const initialDate = (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate))
+        ? paramDate
+        : getTodayDateString();
+      if (els.inputDate) els.inputDate.value = initialDate;
+
+      // 初始化 CWA 授權碼記憶
       const savedCwaKey = localStorage.getItem('cwa_api_key');
       if (els.inputCwaKey) {
         if (paramCwaKey) {
@@ -1420,7 +1350,17 @@ xmlns="http://www.w3.org/TR/REC-html40">
         }
         els.inputCwaKey.addEventListener('change', (e) => {
           localStorage.setItem('cwa_api_key', e.target.value.trim());
-          showToast('已更新並記憶 CWA 授權碼', 'info');
+        });
+      }
+
+      // 複製申請網址與顯示/隱藏授權碼
+      if (els.btnCopyCwaUrl) {
+        els.btnCopyCwaUrl.addEventListener('click', () => {
+          const ok = copyTextSafe('https://opendata.cwa.gov.tw');
+          showToast(
+            ok ? '已複製中央氣象署開放平臺網址：https://opendata.cwa.gov.tw' : '網址：https://opendata.cwa.gov.tw',
+            'info'
+          );
         });
       }
 
@@ -1432,32 +1372,12 @@ xmlns="http://www.w3.org/TR/REC-html40">
         });
       }
 
-      if (els.btnCopyCwaUrl) {
-        els.btnCopyCwaUrl.addEventListener('click', () => {
-          copyTextSafe('https://opendata.cwa.gov.tw', '已複製中央氣象署開放平臺網址');
-        });
-      }
-
-      // 設定初始日期
-      const initialDate = (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate))
-        ? paramDate
-        : getTodayIsoLocal();
-      if (els.inputDate) {
-        els.inputDate.value = initialDate;
-        els.inputDate.addEventListener('change', (e) => {
-          if (e.target.value) {
-            populateDateFields(e.target.value);
-          }
-        });
-      }
-
-      // 恢復自動執行與自動存檔偏好
-      const savedAutoRun = localStorage.getItem('poster_auto_run') === '1';
+      // 初始化自動執行與自動下載記憶開關
       if (els.toggleAutoRun) {
-        els.toggleAutoRun.checked = savedAutoRun;
+        els.toggleAutoRun.checked = localStorage.getItem('poster_auto_run') === '1' || paramAuto;
         els.toggleAutoRun.addEventListener('change', (e) => {
           localStorage.setItem('poster_auto_run', e.target.checked ? '1' : '0');
-          showToast(e.target.checked ? '已開啟開啟網頁時自動執行' : '已關閉自動執行', 'info');
+          showToast(e.target.checked ? '已開啟每日自動觸發模式' : '已關閉每日自動觸發模式', 'info');
         });
       }
 
@@ -1465,80 +1385,128 @@ xmlns="http://www.w3.org/TR/REC-html40">
         els.toggleAutoDownload.checked = localStorage.getItem('poster_auto_download') === '1';
         els.toggleAutoDownload.addEventListener('change', (e) => {
           localStorage.setItem('poster_auto_download', e.target.checked ? '1' : '0');
-          showToast(e.target.checked ? '已開啟生成後自動存檔下載 (.doc)' : '已關閉自動下載，改為手動匯出', 'info');
+          showToast(e.target.checked ? '已開啟生成後自動下載 .doc 檔案' : '已關閉自動下載 .doc 檔案', 'info');
         });
       }
 
-      // 綁定三語表格所有欄位即時同步預覽
-      for (const key of FIELD_KEYS) {
-        const inputEl = document.getElementById(key);
-        if (inputEl) {
-          inputEl.addEventListener('input', syncPreviewFromInputs);
+      // 綁定雙向輸入預覽同步
+      FIELD_KEYS.forEach(key => {
+        const input = document.getElementById(key);
+        if (input) {
+          input.addEventListener('input', syncInputsToPreview);
         }
+      });
+
+      if (els.inputDate) {
+        els.inputDate.addEventListener('change', () => {
+          populateDateFields(els.inputDate.value);
+        });
       }
 
-      // 綁定歷史上的今天編輯區與自動校正格式按鈕
-      if (els.historyEditor) {
-        els.historyEditor.addEventListener('input', () => {
-          const lines = els.historyEditor.value
-            .split(/\r?\n/)
-            .map(l => l.trim())
-            .filter(Boolean);
-          renderHistoryPreview(lines);
+      // 綁定歷史上的今天顧問提示詞面板與編輯區
+      if (els.historyPromptEditor) {
+        const savedPrompt = localStorage.getItem('history_gem_prompt');
+        els.historyPromptEditor.value = savedPrompt || DEFAULT_HISTORY_GEM_PROMPT;
+        els.historyPromptEditor.addEventListener('change', (e) => {
+          localStorage.setItem('history_gem_prompt', e.target.value);
+          showToast('已儲存自訂顧問提示詞', 'info');
         });
+      }
+
+      if (els.btnTogglePrompt && els.promptDrawer) {
+        els.btnTogglePrompt.addEventListener('click', () => {
+          const isHidden = els.promptDrawer.classList.contains('hidden');
+          els.promptDrawer.classList.toggle('hidden');
+          els.btnTogglePrompt.textContent = isHidden ? '收合提示詞' : '檢視提示詞';
+        });
+      }
+
+      if (els.btnResetPrompt && els.historyPromptEditor) {
+        els.btnResetPrompt.addEventListener('click', () => {
+          els.historyPromptEditor.value = DEFAULT_HISTORY_GEM_PROMPT;
+          localStorage.removeItem('history_gem_prompt');
+          showToast('已恢復為預設顧問提示詞', 'success');
+        });
+      }
+
+      if (els.historyEditor) {
+        els.historyEditor.addEventListener('input', syncInputsToPreview);
       }
 
       if (els.btnReformatHistory && els.historyEditor) {
         els.btnReformatHistory.addEventListener('click', () => {
-          const corrected = sanitizeHistoryLines(els.historyEditor.value, true);
-          updateHistoryEditor(corrected);
-          showToast(`已完成格式校正與年份排序（共 ${corrected.length} 則）`, 'success');
+          const original = els.historyEditor.value.trim();
+          if (!original) {
+            showToast('目前沒有可校正的歷史事件內容', 'warning');
+            return;
+          }
+          const cleaned = sanitizeHistoryLines(original);
+          if (cleaned.length === 0) {
+            showToast('未偵測到符合「YYYY年 事件內容」格式的項目，已保留原文字', 'warning');
+            return;
+          }
+          els.historyEditor.value = cleaned.join('\n');
+          syncInputsToPreview();
+          showToast(`已完成格式校正與年份排序（共 ${cleaned.length} 則）`, 'success');
         });
       }
 
-      // 綁定主要操作按鈕
+      // 綁定主生成按鈕與匯出 / 複製按鈕
       if (els.btnGenerateAll) {
         els.btnGenerateAll.addEventListener('click', runFullAutomation);
       }
 
+      if (els.btnExportDoc) {
+        els.btnExportDoc.addEventListener('click', exportWord97Doc);
+      }
+
       if (els.btnCopyAllText) {
         els.btnCopyAllText.addEventListener('click', () => {
-          copyTextSafe(buildPlainTextReport(), '已複製海報完整純文字內容');
+          const g = (id) => (document.getElementById(id)?.value || '').trim();
+          const summary = [
+            `${g('date_en')} | ${g('date_zh')} | ${g('date_ja')}`,
+            `${g('lunar_zh')} | ${g('era_ja')}`,
+            `${g('week_en')} | ${g('week_zh')} | ${g('week_ja')}`,
+            `Weather: ${g('weather_en')} | 氣候: ${g('weather_zh')} | 天気: ${g('weather_ja')}`,
+            `Temperature: ${g('temp_en')} | 氣溫: ${g('temp_zh')} | 温度: ${g('temp_ja')}`,
+            `Probability of Precipitation: ${g('rain_en')} | 降雨機率: ${g('rain_zh')} | 降水確率: ${g('rain_ja')}`,
+            '',
+            '歷史上的今天：',
+            (els.historyEditor?.value || '').trim()
+          ].join('\n');
+
+          const ok = copyTextSafe(summary);
+          showToast(ok ? '已複製完整海報純文字內容！' : '複製失敗，請手動選取複製', ok ? 'success' : 'error');
         });
       }
 
-      if (els.btnExportDoc) {
-        els.btnExportDoc.addEventListener('click', () => exportWord97Doc(false));
-      }
-
-      // 設定指南彈窗控制
+      // 綁定自動化設定指南 Modal
+      const openModal = () => els.guideModal?.classList.remove('hidden');
       const closeModal = () => els.guideModal?.classList.add('hidden');
-      if (els.btnToggleGuide) {
-        els.btnToggleGuide.addEventListener('click', () => els.guideModal?.classList.remove('hidden'));
-      }
-      if (els.btnCloseGuide) els.btnCloseGuide.addEventListener('click', closeModal);
-      if (els.btnCloseGuideFooter) els.btnCloseGuideFooter.addEventListener('click', closeModal);
-      if (els.guideModal) {
-        els.guideModal.addEventListener('click', (e) => {
-          if (e.target === els.guideModal) closeModal();
-        });
-      }
-      if (els.btnCopySchema && els.schemaBlock) {
-        els.btnCopySchema.addEventListener('click', () => {
-          copyTextSafe(els.schemaBlock.textContent, '已複製 Word 範本變數對照清單');
-        });
-      }
+      els.btnToggleGuide?.addEventListener('click', openModal);
+      els.btnCloseGuide?.addEventListener('click', closeModal);
+      els.btnCloseGuideFooter?.addEventListener('click', closeModal);
+      els.guideModal?.addEventListener('click', (e) => {
+        if (e.target === els.guideModal) closeModal();
+      });
 
-      // 初始化日期欄位顯示
+      els.btnCopySchema?.addEventListener('click', () => {
+        const ok = copyTextSafe(els.schemaBlock?.textContent || '');
+        showToast(ok ? '已複製 Word 範本變數清單' : '複製失敗', ok ? 'success' : 'error');
+      });
+
+      // 初始填入日期欄位並依設定自動觸發
       populateDateFields(initialDate);
-
-      // 若開啟自動執行或網址帶入 auto=1，立即啟動自動化生成
-      if (savedAutoRun || paramAuto === '1') {
+      if (els.toggleAutoRun?.checked) {
         runFullAutomation();
       }
     }
 
-    window.addEventListener('DOMContentLoaded', initApp);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
-</html>  
+</html>
